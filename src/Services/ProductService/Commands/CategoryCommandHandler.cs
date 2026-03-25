@@ -1,19 +1,34 @@
 using MediatR;
 using ProductService.Commands;
+using ProductService.Configurations;
 using ProductService.Data;
 using ProductService.Dtos;
+using ProductService.Messaging;
 using ProductService.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace ProductService.Handlers;
 
 public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryCommand, CategoryResponseDto>
 {
     private readonly ProductDbContext _context;
+    private readonly IKafkaProducer _kafkaProducer;
+    private readonly KafkaSettings _kafkaSettings;
+    private readonly ILogger<CreateCategoryCommandHandler> _logger;
 
-    public CreateCategoryCommandHandler(ProductDbContext context)
+    public CreateCategoryCommandHandler(
+        ProductDbContext context,
+        IKafkaProducer kafkaProducer,
+        IOptions<KafkaSettings> kafkaOptions,
+        ILogger<CreateCategoryCommandHandler> logger)
     {
         _context = context;
+        _kafkaProducer = kafkaProducer;
+        _kafkaSettings = kafkaOptions.Value;
+        _logger = logger;
     }
 
     public async Task<CategoryResponseDto> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
@@ -35,7 +50,37 @@ public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryComman
         _context.Categories.Add(category);
         await _context.SaveChangesAsync(cancellationToken);
 
+        await PublishKafkaEventSafe(
+            eventType: "CategoryCreated",
+            aggregateId: category.Id,
+            data: new { category.Id, category.Name, category.IsActive },
+            cancellationToken);
+
         return MapToResponseDto(category);
+    }
+
+    private async Task PublishKafkaEventSafe(string eventType, Guid aggregateId, object data, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _kafkaProducer.PublishAsync(
+                _kafkaSettings.ProductEventsTopic,
+                aggregateId.ToString(),
+                new KafkaEventMessage
+                {
+                    EventType = eventType,
+                    AggregateType = "Category",
+                    AggregateId = aggregateId.ToString(),
+                    Source = "ProductService",
+                    Data = JsonSerializer.Serialize(data),
+                    OccurredAtUtc = DateTime.UtcNow
+                },
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Kafka publish failed for event {EventType}", eventType);
+        }
     }
 
     private static CategoryResponseDto MapToResponseDto(Category category)
@@ -52,10 +97,20 @@ public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryComman
 public class UpdateCategoryCommandHandler : IRequestHandler<UpdateCategoryCommand, CategoryResponseDto>
 {
     private readonly ProductDbContext _context;
+    private readonly IKafkaProducer _kafkaProducer;
+    private readonly KafkaSettings _kafkaSettings;
+    private readonly ILogger<UpdateCategoryCommandHandler> _logger;
 
-    public UpdateCategoryCommandHandler(ProductDbContext context)
+    public UpdateCategoryCommandHandler(
+        ProductDbContext context,
+        IKafkaProducer kafkaProducer,
+        IOptions<KafkaSettings> kafkaOptions,
+        ILogger<UpdateCategoryCommandHandler> logger)
     {
         _context = context;
+        _kafkaProducer = kafkaProducer;
+        _kafkaSettings = kafkaOptions.Value;
+        _logger = logger;
     }
 
     public async Task<CategoryResponseDto> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
@@ -81,7 +136,37 @@ public class UpdateCategoryCommandHandler : IRequestHandler<UpdateCategoryComman
         _context.Categories.Update(category);
         await _context.SaveChangesAsync(cancellationToken);
 
+        await PublishKafkaEventSafe(
+            eventType: "CategoryUpdated",
+            aggregateId: category.Id,
+            data: new { category.Id, category.Name, category.IsActive },
+            cancellationToken);
+
         return MapToResponseDto(category);
+    }
+
+    private async Task PublishKafkaEventSafe(string eventType, Guid aggregateId, object data, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _kafkaProducer.PublishAsync(
+                _kafkaSettings.ProductEventsTopic,
+                aggregateId.ToString(),
+                new KafkaEventMessage
+                {
+                    EventType = eventType,
+                    AggregateType = "Category",
+                    AggregateId = aggregateId.ToString(),
+                    Source = "ProductService",
+                    Data = JsonSerializer.Serialize(data),
+                    OccurredAtUtc = DateTime.UtcNow
+                },
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Kafka publish failed for event {EventType}", eventType);
+        }
     }
 
     private static CategoryResponseDto MapToResponseDto(Category category)
@@ -98,10 +183,20 @@ public class UpdateCategoryCommandHandler : IRequestHandler<UpdateCategoryComman
 public class DeleteCategoryCommandHandler : IRequestHandler<DeleteCategoryCommand, bool>
 {
     private readonly ProductDbContext _context;
+    private readonly IKafkaProducer _kafkaProducer;
+    private readonly KafkaSettings _kafkaSettings;
+    private readonly ILogger<DeleteCategoryCommandHandler> _logger;
 
-    public DeleteCategoryCommandHandler(ProductDbContext context)
+    public DeleteCategoryCommandHandler(
+        ProductDbContext context,
+        IKafkaProducer kafkaProducer,
+        IOptions<KafkaSettings> kafkaOptions,
+        ILogger<DeleteCategoryCommandHandler> logger)
     {
         _context = context;
+        _kafkaProducer = kafkaProducer;
+        _kafkaSettings = kafkaOptions.Value;
+        _logger = logger;
     }
 
     public async Task<bool> Handle(DeleteCategoryCommand request, CancellationToken cancellationToken)
@@ -120,6 +215,36 @@ public class DeleteCategoryCommandHandler : IRequestHandler<DeleteCategoryComman
         _context.Categories.Remove(category);
         await _context.SaveChangesAsync(cancellationToken);
 
+        await PublishKafkaEventSafe(
+            eventType: "CategoryDeleted",
+            aggregateId: request.Id,
+            data: new { Id = request.Id },
+            cancellationToken);
+
         return true;
+    }
+
+    private async Task PublishKafkaEventSafe(string eventType, Guid aggregateId, object data, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _kafkaProducer.PublishAsync(
+                _kafkaSettings.ProductEventsTopic,
+                aggregateId.ToString(),
+                new KafkaEventMessage
+                {
+                    EventType = eventType,
+                    AggregateType = "Category",
+                    AggregateId = aggregateId.ToString(),
+                    Source = "ProductService",
+                    Data = JsonSerializer.Serialize(data),
+                    OccurredAtUtc = DateTime.UtcNow
+                },
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Kafka publish failed for event {EventType}", eventType);
+        }
     }
 }

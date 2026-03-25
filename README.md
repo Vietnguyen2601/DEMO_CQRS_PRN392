@@ -206,6 +206,8 @@ docker-compose up --build
 
 ### 📦 Product Service
 
+> CQRS storage split: **Write = PostgreSQL**, **Read = MongoDB**
+
 | Method | Gateway URL | Mô tả |
 |--------|-------------|-------|
 | `POST` | `/products/api/products` | Tạo sản phẩm mới |
@@ -313,6 +315,8 @@ Mỗi service có Swagger riêng (khi chạy development mode):
 - **Token**: `IdentityService` trả về token giả (`fake-jwt-token-for-{userId}`) — Production cần tích hợp JWT thật.
 - **Không có authentication tại Gateway**: Demo tập trung vào CQRS. Có thể bổ sung JWT middleware vào YARP sau.
 - **CQRS tách biệt Command/Query**: Mọi thay đổi dữ liệu đi qua `Command`, mọi đọc dữ liệu đi qua `Query` — không được gọi lẫn lộn.
+- **Kafka Events**: ProductService publish vào topic `product-events`, InventoryService publish vào topic `inventory-events`.
+- **Kafka Consumers**: InventoryService subscribe `product-events`, ProductService subscribe `inventory-events`.
 
 ---
 

@@ -1,19 +1,34 @@
 using InventoryService.Commands;
+using InventoryService.Configurations;
 using InventoryService.Data;
 using InventoryService.Dtos;
+using InventoryService.Messaging;
 using InventoryService.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace InventoryService.Handlers;
 
 public class CreateInventoryItemCommandHandler : IRequestHandler<CreateInventoryItemCommand, InventoryResponseDto>
 {
     private readonly InventoryDbContext _context;
+    private readonly IKafkaProducer _kafkaProducer;
+    private readonly KafkaSettings _kafkaSettings;
+    private readonly ILogger<CreateInventoryItemCommandHandler> _logger;
 
-    public CreateInventoryItemCommandHandler(InventoryDbContext context)
+    public CreateInventoryItemCommandHandler(
+        InventoryDbContext context,
+        IKafkaProducer kafkaProducer,
+        IOptions<KafkaSettings> kafkaOptions,
+        ILogger<CreateInventoryItemCommandHandler> logger)
     {
         _context = context;
+        _kafkaProducer = kafkaProducer;
+        _kafkaSettings = kafkaOptions.Value;
+        _logger = logger;
     }
 
     public async Task<InventoryResponseDto> Handle(CreateInventoryItemCommand request, CancellationToken cancellationToken)
@@ -36,7 +51,37 @@ public class CreateInventoryItemCommandHandler : IRequestHandler<CreateInventory
         _context.InventoryItems.Add(item);
         await _context.SaveChangesAsync(cancellationToken);
 
+        await PublishKafkaEventSafe(
+            eventType: "InventoryCreated",
+            aggregateId: item.Id,
+            data: new { item.Id, item.ProductId, item.ProductName, item.Quantity },
+            cancellationToken);
+
         return MapToResponseDto(item);
+    }
+
+    private async Task PublishKafkaEventSafe(string eventType, Guid aggregateId, object data, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _kafkaProducer.PublishAsync(
+                _kafkaSettings.InventoryEventsTopic,
+                aggregateId.ToString(),
+                new KafkaEventMessage
+                {
+                    EventType = eventType,
+                    AggregateType = "InventoryItem",
+                    AggregateId = aggregateId.ToString(),
+                    Source = "InventoryService",
+                    Data = JsonSerializer.Serialize(data),
+                    OccurredAtUtc = DateTime.UtcNow
+                },
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Kafka publish failed for event {EventType}", eventType);
+        }
     }
 
     private static InventoryResponseDto MapToResponseDto(InventoryItem item)
@@ -55,10 +100,20 @@ public class CreateInventoryItemCommandHandler : IRequestHandler<CreateInventory
 public class UpdateInventoryItemCommandHandler : IRequestHandler<UpdateInventoryItemCommand, InventoryResponseDto>
 {
     private readonly InventoryDbContext _context;
+    private readonly IKafkaProducer _kafkaProducer;
+    private readonly KafkaSettings _kafkaSettings;
+    private readonly ILogger<UpdateInventoryItemCommandHandler> _logger;
 
-    public UpdateInventoryItemCommandHandler(InventoryDbContext context)
+    public UpdateInventoryItemCommandHandler(
+        InventoryDbContext context,
+        IKafkaProducer kafkaProducer,
+        IOptions<KafkaSettings> kafkaOptions,
+        ILogger<UpdateInventoryItemCommandHandler> logger)
     {
         _context = context;
+        _kafkaProducer = kafkaProducer;
+        _kafkaSettings = kafkaOptions.Value;
+        _logger = logger;
     }
 
     public async Task<InventoryResponseDto> Handle(UpdateInventoryItemCommand request, CancellationToken cancellationToken)
@@ -78,7 +133,37 @@ public class UpdateInventoryItemCommandHandler : IRequestHandler<UpdateInventory
         _context.InventoryItems.Update(item);
         await _context.SaveChangesAsync(cancellationToken);
 
+        await PublishKafkaEventSafe(
+            eventType: "InventoryUpdated",
+            aggregateId: item.Id,
+            data: new { item.Id, item.ProductId, item.ProductName, item.Quantity },
+            cancellationToken);
+
         return MapToResponseDto(item);
+    }
+
+    private async Task PublishKafkaEventSafe(string eventType, Guid aggregateId, object data, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _kafkaProducer.PublishAsync(
+                _kafkaSettings.InventoryEventsTopic,
+                aggregateId.ToString(),
+                new KafkaEventMessage
+                {
+                    EventType = eventType,
+                    AggregateType = "InventoryItem",
+                    AggregateId = aggregateId.ToString(),
+                    Source = "InventoryService",
+                    Data = JsonSerializer.Serialize(data),
+                    OccurredAtUtc = DateTime.UtcNow
+                },
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Kafka publish failed for event {EventType}", eventType);
+        }
     }
 
     private static InventoryResponseDto MapToResponseDto(InventoryItem item)
@@ -97,10 +182,20 @@ public class UpdateInventoryItemCommandHandler : IRequestHandler<UpdateInventory
 public class UpdateInventoryQuantityCommandHandler : IRequestHandler<UpdateInventoryQuantityCommand, InventoryResponseDto>
 {
     private readonly InventoryDbContext _context;
+    private readonly IKafkaProducer _kafkaProducer;
+    private readonly KafkaSettings _kafkaSettings;
+    private readonly ILogger<UpdateInventoryQuantityCommandHandler> _logger;
 
-    public UpdateInventoryQuantityCommandHandler(InventoryDbContext context)
+    public UpdateInventoryQuantityCommandHandler(
+        InventoryDbContext context,
+        IKafkaProducer kafkaProducer,
+        IOptions<KafkaSettings> kafkaOptions,
+        ILogger<UpdateInventoryQuantityCommandHandler> logger)
     {
         _context = context;
+        _kafkaProducer = kafkaProducer;
+        _kafkaSettings = kafkaOptions.Value;
+        _logger = logger;
     }
 
     public async Task<InventoryResponseDto> Handle(UpdateInventoryQuantityCommand request, CancellationToken cancellationToken)
@@ -115,7 +210,37 @@ public class UpdateInventoryQuantityCommandHandler : IRequestHandler<UpdateInven
         _context.InventoryItems.Update(item);
         await _context.SaveChangesAsync(cancellationToken);
 
+        await PublishKafkaEventSafe(
+            eventType: "InventoryQuantityUpdated",
+            aggregateId: item.Id,
+            data: new { item.Id, item.ProductId, item.Quantity },
+            cancellationToken);
+
         return MapToResponseDto(item);
+    }
+
+    private async Task PublishKafkaEventSafe(string eventType, Guid aggregateId, object data, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _kafkaProducer.PublishAsync(
+                _kafkaSettings.InventoryEventsTopic,
+                aggregateId.ToString(),
+                new KafkaEventMessage
+                {
+                    EventType = eventType,
+                    AggregateType = "InventoryItem",
+                    AggregateId = aggregateId.ToString(),
+                    Source = "InventoryService",
+                    Data = JsonSerializer.Serialize(data),
+                    OccurredAtUtc = DateTime.UtcNow
+                },
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Kafka publish failed for event {EventType}", eventType);
+        }
     }
 
     private static InventoryResponseDto MapToResponseDto(InventoryItem item)
@@ -134,10 +259,20 @@ public class UpdateInventoryQuantityCommandHandler : IRequestHandler<UpdateInven
 public class DeleteInventoryItemCommandHandler : IRequestHandler<DeleteInventoryItemCommand, bool>
 {
     private readonly InventoryDbContext _context;
+    private readonly IKafkaProducer _kafkaProducer;
+    private readonly KafkaSettings _kafkaSettings;
+    private readonly ILogger<DeleteInventoryItemCommandHandler> _logger;
 
-    public DeleteInventoryItemCommandHandler(InventoryDbContext context)
+    public DeleteInventoryItemCommandHandler(
+        InventoryDbContext context,
+        IKafkaProducer kafkaProducer,
+        IOptions<KafkaSettings> kafkaOptions,
+        ILogger<DeleteInventoryItemCommandHandler> logger)
     {
         _context = context;
+        _kafkaProducer = kafkaProducer;
+        _kafkaSettings = kafkaOptions.Value;
+        _logger = logger;
     }
 
     public async Task<bool> Handle(DeleteInventoryItemCommand request, CancellationToken cancellationToken)
@@ -149,6 +284,36 @@ public class DeleteInventoryItemCommandHandler : IRequestHandler<DeleteInventory
         _context.InventoryItems.Remove(item);
         await _context.SaveChangesAsync(cancellationToken);
 
+        await PublishKafkaEventSafe(
+            eventType: "InventoryDeleted",
+            aggregateId: item.Id,
+            data: new { item.Id, item.ProductId },
+            cancellationToken);
+
         return true;
+    }
+
+    private async Task PublishKafkaEventSafe(string eventType, Guid aggregateId, object data, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _kafkaProducer.PublishAsync(
+                _kafkaSettings.InventoryEventsTopic,
+                aggregateId.ToString(),
+                new KafkaEventMessage
+                {
+                    EventType = eventType,
+                    AggregateType = "InventoryItem",
+                    AggregateId = aggregateId.ToString(),
+                    Source = "InventoryService",
+                    Data = JsonSerializer.Serialize(data),
+                    OccurredAtUtc = DateTime.UtcNow
+                },
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Kafka publish failed for event {EventType}", eventType);
+        }
     }
 }
