@@ -263,6 +263,8 @@ docker-compose up --build
 
 ### 📊 Inventory Service
 
+> CQRS storage split: **Write = PostgreSQL**, **Read = MongoDB**
+
 | Method | Gateway URL | Mô tả |
 |--------|-------------|-------|
 | `POST` | `/inventory/api/inventory` | Tạo mới bản ghi tồn kho |
