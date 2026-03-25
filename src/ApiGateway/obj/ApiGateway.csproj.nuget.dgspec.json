@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Acer\\Desktop\\CQRS\\src\\ApiGateway\\ApiGateway.csproj": {}
+    "D:\\FPT\\Semester 8\\PRN232\\DEMO_CQRS_PRN392\\src\\ApiGateway\\ApiGateway.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Acer\\Desktop\\CQRS\\src\\ApiGateway\\ApiGateway.csproj": {
+    "D:\\FPT\\Semester 8\\PRN232\\DEMO_CQRS_PRN392\\src\\ApiGateway\\ApiGateway.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Acer\\Desktop\\CQRS\\src\\ApiGateway\\ApiGateway.csproj",
+        "projectUniqueName": "D:\\FPT\\Semester 8\\PRN232\\DEMO_CQRS_PRN392\\src\\ApiGateway\\ApiGateway.csproj",
         "projectName": "ApiGateway",
-        "projectPath": "C:\\Users\\Acer\\Desktop\\CQRS\\src\\ApiGateway\\ApiGateway.csproj",
-        "packagesPath": "C:\\Users\\Acer\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Acer\\Desktop\\CQRS\\src\\ApiGateway\\obj\\",
+        "projectPath": "D:\\FPT\\Semester 8\\PRN232\\DEMO_CQRS_PRN392\\src\\ApiGateway\\ApiGateway.csproj",
+        "packagesPath": "C:\\Users\\thien\\.nuget\\packages\\",
+        "outputPath": "D:\\FPT\\Semester 8\\PRN232\\DEMO_CQRS_PRN392\\src\\ApiGateway\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Acer\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\thien\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -74,7 +74,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
