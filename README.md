@@ -265,16 +265,27 @@ docker-compose up --build
 
 | Method | Gateway URL | Mô tả |
 |--------|-------------|-------|
-| `POST` | `/inventory/api/inventory` | Thêm/cập nhật tồn kho |
-| `GET` | `/inventory/api/inventory/{productId}` | Xem tồn kho theo sản phẩm |
+| `POST` | `/inventory/api/inventory` | Tạo mới bản ghi tồn kho |
+| `PUT` | `/inventory/api/inventory/{id}` | Cập nhật thông tin tồn kho |
+| `PATCH` | `/inventory/api/inventory/{id}/quantity` | Cập nhật nhanh số lượng |
+| `DELETE` | `/inventory/api/inventory/{id}` | Xóa bản ghi tồn kho |
+| `GET` | `/inventory/api/inventory/product/{productId}` | Xem tồn kho theo sản phẩm |
 | `GET` | `/inventory/api/inventory` | Xem toàn bộ tồn kho |
+| `GET` | `/inventory/api/inventory/{id}` | Xem tồn kho theo Id |
 
-**Body Update Stock:**
+**Body Create Inventory:**
 ```json
 {
   "productId": "{{productId}}",
   "productName": "Laptop Lenovo",
   "quantity": 100
+}
+```
+
+**Body Update Quantity:**
+```json
+{
+  "quantity": 95
 }
 ```
 
