@@ -206,6 +206,8 @@ docker-compose up --build
 
 ### 📦 Product Service
 
+> CQRS storage split: **Write = PostgreSQL**, **Read = MongoDB**
+
 | Method | Gateway URL | Mô tả |
 |--------|-------------|-------|
 | `POST` | `/products/api/products` | Tạo sản phẩm mới |
@@ -263,18 +265,31 @@ docker-compose up --build
 
 ### 📊 Inventory Service
 
+> CQRS storage split: **Write = PostgreSQL**, **Read = MongoDB**
+
 | Method | Gateway URL | Mô tả |
 |--------|-------------|-------|
-| `POST` | `/inventory/api/inventory` | Thêm/cập nhật tồn kho |
-| `GET` | `/inventory/api/inventory/{productId}` | Xem tồn kho theo sản phẩm |
+| `POST` | `/inventory/api/inventory` | Tạo mới bản ghi tồn kho |
+| `PUT` | `/inventory/api/inventory/{id}` | Cập nhật thông tin tồn kho |
+| `PATCH` | `/inventory/api/inventory/{id}/quantity` | Cập nhật nhanh số lượng |
+| `DELETE` | `/inventory/api/inventory/{id}` | Xóa bản ghi tồn kho |
+| `GET` | `/inventory/api/inventory/product/{productId}` | Xem tồn kho theo sản phẩm |
 | `GET` | `/inventory/api/inventory` | Xem toàn bộ tồn kho |
+| `GET` | `/inventory/api/inventory/{id}` | Xem tồn kho theo Id |
 
-**Body Update Stock:**
+**Body Create Inventory:**
 ```json
 {
   "productId": "{{productId}}",
   "productName": "Laptop Lenovo",
   "quantity": 100
+}
+```
+
+**Body Update Quantity:**
+```json
+{
+  "quantity": 95
 }
 ```
 
@@ -300,6 +315,8 @@ Mỗi service có Swagger riêng (khi chạy development mode):
 - **Token**: `IdentityService` trả về token giả (`fake-jwt-token-for-{userId}`) — Production cần tích hợp JWT thật.
 - **Không có authentication tại Gateway**: Demo tập trung vào CQRS. Có thể bổ sung JWT middleware vào YARP sau.
 - **CQRS tách biệt Command/Query**: Mọi thay đổi dữ liệu đi qua `Command`, mọi đọc dữ liệu đi qua `Query` — không được gọi lẫn lộn.
+- **Kafka Events**: ProductService publish vào topic `product-events`, InventoryService publish vào topic `inventory-events`.
+- **Kafka Consumers**: InventoryService subscribe `product-events`, ProductService subscribe `inventory-events`.
 
 ---
 

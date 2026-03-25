@@ -2,173 +2,68 @@ using MediatR;
 using ProductService.Queries;
 using ProductService.Data;
 using ProductService.Dtos;
-using Microsoft.EntityFrameworkCore;
 
 namespace ProductService.Handlers;
 
 public class GetAllProductsQueryHandler : IRequestHandler<GetAllProductsQuery, List<ProductResponseDto>>
 {
-    private readonly ProductDbContext _context;
+    private readonly IProductReadRepository _readRepository;
 
-    public GetAllProductsQueryHandler(ProductDbContext context)
+    public GetAllProductsQueryHandler(IProductReadRepository readRepository)
     {
-        _context = context;
+        _readRepository = readRepository;
     }
 
     public async Task<List<ProductResponseDto>> Handle(GetAllProductsQuery request, CancellationToken cancellationToken)
     {
-        var products = await _context.Products
-            .Include(p => p.Category)
-            .ToListAsync(cancellationToken);
-
-        return products.Select(MapToResponseDto).ToList();
-    }
-
-    private static ProductResponseDto MapToResponseDto(Models.Product product)
-    {
-        return new ProductResponseDto
-        {
-            Id = product.Id,
-            ShopId = product.ShopId,
-            CategoryId = product.CategoryId,
-            Name = product.Name,
-            Description = product.Description,
-            Price = product.Price,
-            StockQuantity = product.StockQuantity,
-            CreatedAt = product.CreatedAt,
-            UpdatedAt = product.UpdatedAt,
-            Category = product.Category != null ? new CategoryResponseDto
-            {
-                Id = product.Category.Id,
-                Name = product.Category.Name,
-                IsActive = product.Category.IsActive
-            } : null
-        };
+        return await _readRepository.GetAllProductsAsync(cancellationToken);
     }
 }
 
 public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, ProductResponseDto>
 {
-    private readonly ProductDbContext _context;
+    private readonly IProductReadRepository _readRepository;
 
-    public GetProductByIdQueryHandler(ProductDbContext context)
+    public GetProductByIdQueryHandler(IProductReadRepository readRepository)
     {
-        _context = context;
+        _readRepository = readRepository;
     }
 
     public async Task<ProductResponseDto> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
     {
-        var product = await _context.Products
-            .Include(p => p.Category)
-            .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken)
+        var product = await _readRepository.GetProductByIdAsync(request.Id, cancellationToken)
             ?? throw new InvalidOperationException($"Product with ID {request.Id} not found");
 
-        return MapToResponseDto(product);
-    }
-
-    private static ProductResponseDto MapToResponseDto(Models.Product product)
-    {
-        return new ProductResponseDto
-        {
-            Id = product.Id,
-            ShopId = product.ShopId,
-            CategoryId = product.CategoryId,
-            Name = product.Name,
-            Description = product.Description,
-            Price = product.Price,
-            StockQuantity = product.StockQuantity,
-            CreatedAt = product.CreatedAt,
-            UpdatedAt = product.UpdatedAt,
-            Category = product.Category != null ? new CategoryResponseDto
-            {
-                Id = product.Category.Id,
-                Name = product.Category.Name,
-                IsActive = product.Category.IsActive
-            } : null
-        };
+        return product;
     }
 }
 
 public class GetProductsByCategoryQueryHandler : IRequestHandler<GetProductsByCategoryQuery, List<ProductResponseDto>>
 {
-    private readonly ProductDbContext _context;
+    private readonly IProductReadRepository _readRepository;
 
-    public GetProductsByCategoryQueryHandler(ProductDbContext context)
+    public GetProductsByCategoryQueryHandler(IProductReadRepository readRepository)
     {
-        _context = context;
+        _readRepository = readRepository;
     }
 
     public async Task<List<ProductResponseDto>> Handle(GetProductsByCategoryQuery request, CancellationToken cancellationToken)
     {
-        var products = await _context.Products
-            .Where(p => p.CategoryId == request.CategoryId)
-            .Include(p => p.Category)
-            .ToListAsync(cancellationToken);
-
-        return products.Select(MapToResponseDto).ToList();
-    }
-
-    private static ProductResponseDto MapToResponseDto(Models.Product product)
-    {
-        return new ProductResponseDto
-        {
-            Id = product.Id,
-            ShopId = product.ShopId,
-            CategoryId = product.CategoryId,
-            Name = product.Name,
-            Description = product.Description,
-            Price = product.Price,
-            StockQuantity = product.StockQuantity,
-            CreatedAt = product.CreatedAt,
-            UpdatedAt = product.UpdatedAt,
-            Category = product.Category != null ? new CategoryResponseDto
-            {
-                Id = product.Category.Id,
-                Name = product.Category.Name,
-                IsActive = product.Category.IsActive
-            } : null
-        };
+        return await _readRepository.GetProductsByCategoryAsync(request.CategoryId, cancellationToken);
     }
 }
 
 public class GetProductsByShopQueryHandler : IRequestHandler<GetProductsByShopQuery, List<ProductResponseDto>>
 {
-    private readonly ProductDbContext _context;
+    private readonly IProductReadRepository _readRepository;
 
-    public GetProductsByShopQueryHandler(ProductDbContext context)
+    public GetProductsByShopQueryHandler(IProductReadRepository readRepository)
     {
-        _context = context;
+        _readRepository = readRepository;
     }
 
     public async Task<List<ProductResponseDto>> Handle(GetProductsByShopQuery request, CancellationToken cancellationToken)
     {
-        var products = await _context.Products
-            .Where(p => p.ShopId == request.ShopId)
-            .Include(p => p.Category)
-            .ToListAsync(cancellationToken);
-
-        return products.Select(MapToResponseDto).ToList();
-    }
-
-    private static ProductResponseDto MapToResponseDto(Models.Product product)
-    {
-        return new ProductResponseDto
-        {
-            Id = product.Id,
-            ShopId = product.ShopId,
-            CategoryId = product.CategoryId,
-            Name = product.Name,
-            Description = product.Description,
-            Price = product.Price,
-            StockQuantity = product.StockQuantity,
-            CreatedAt = product.CreatedAt,
-            UpdatedAt = product.UpdatedAt,
-            Category = product.Category != null ? new CategoryResponseDto
-            {
-                Id = product.Category.Id,
-                Name = product.Category.Name,
-                IsActive = product.Category.IsActive
-            } : null
-        };
+        return await _readRepository.GetProductsByShopAsync(request.ShopId, cancellationToken);
     }
 }
