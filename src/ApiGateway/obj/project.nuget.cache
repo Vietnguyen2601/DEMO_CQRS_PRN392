@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "GluaFMeo1mg=",
+  "dgSpecHash": "N115evkLYLE=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Acer\\Desktop\\CQRS\\src\\ApiGateway\\ApiGateway.csproj",
+  "projectFilePath": "D:\\FPT\\Semester 8\\PRN232\\DEMO_CQRS_PRN392\\src\\ApiGateway\\ApiGateway.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Acer\\.nuget\\packages\\system.io.hashing\\8.0.0\\system.io.hashing.8.0.0.nupkg.sha512",
-    "C:\\Users\\Acer\\.nuget\\packages\\yarp.reverseproxy\\2.3.0\\yarp.reverseproxy.2.3.0.nupkg.sha512"
+    "C:\\Users\\thien\\.nuget\\packages\\system.io.hashing\\8.0.0\\system.io.hashing.8.0.0.nupkg.sha512",
+    "C:\\Users\\thien\\.nuget\\packages\\yarp.reverseproxy\\2.3.0\\yarp.reverseproxy.2.3.0.nupkg.sha512"
   ],
   "logs": []
 }
