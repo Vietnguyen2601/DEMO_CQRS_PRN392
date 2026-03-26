@@ -1,4 +1,31 @@
 services:
+  # ========================
+  # DATABASE - MongoDB (Read DB cho CQRS)
+  # ========================
+  mongodb:
+    image: mongo:7
+    container_name: cqrs-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  mongo-express:
+    image: mongo-express:1.0
+    container_name: cqrs-mongo-express
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
+      ME_CONFIG_BASICAUTH: "false"
+
+  # ========================
+  # MESSAGING - Zookeeper (quản lý Kafka)
+  # ========================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.1
     container_name: cqrs-zookeeper
@@ -8,6 +35,9 @@ services:
     ports:
       - "2181:2181"
 
+  # ========================
+  # MESSAGING - Kafka (event bus)
+  # ========================
   kafka:
     image: confluentinc/cp-kafka:7.6.1
     container_name: cqrs-kafka
@@ -27,6 +57,9 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
+  # ========================
+  # UI - Kafka UI (giao diện quản lý Kafka)
+  # ========================
   kafka-ui:
     image: provectuslabs/kafka-ui:v0.7.2
     container_name: cqrs-kafka-ui
@@ -38,3 +71,7 @@ services:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+volumes:
+  mongodb_data:
+

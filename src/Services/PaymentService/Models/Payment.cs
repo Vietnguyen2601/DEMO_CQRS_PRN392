@@ -7,7 +7,11 @@ public class Payment
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid OrderId { get; set; }
     public decimal Amount { get; set; }
-    public string Method { get; set; } = "CreditCard"; // e.g. CreditCard, BankTransfer
+    public string Method { get; set; } = "VietQR";
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
-    public DateTime ProcessedAt { get; set; } = DateTime.UtcNow;
+    public string? QrDataUrl { get; set; }
+    public string? VietQrOrderId { get; set; }
+    public string? TransactionId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? PaidAt { get; set; }
 }
