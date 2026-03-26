@@ -37,7 +37,7 @@ public class GetOrderByIdQueryHandler : IRequestHandler<GetOrderByIdQuery, Order
     public async Task<OrderResponseDto> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Retrieving order {OrderId} from MongoDB read store", request.OrderId);
-        
+
         var order = await _readRepository.GetByIdAsync(request.OrderId, cancellationToken);
 
         if (order == null)

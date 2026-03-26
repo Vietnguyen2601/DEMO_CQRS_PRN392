@@ -1,6 +1,8 @@
+using OrderService.Behaviors;
 using OrderService.Configurations;
 using OrderService.Data;
 using OrderService.Messaging;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -27,21 +29,22 @@ builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafk
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 builder.Services.AddHostedService<OrderKafkaConsumerService>();
 
-// Add MediatR
-var assembly = Assembly.GetExecutingAssembly();
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(assembly));
+// Add FluentValidation
+builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-// Add Controllers and Swagger
-builder.Services.AddControllers();
-builder.Services.AddSwaggerGen(c =>
+// Add MediatR with validation behavior
+var assembly = Assembly.GetExecutingAssembly();
+builder.Services.AddMediatR(cfg =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "Order Service API",
-        Version = "v1",
-        Description = "API for managing orders"
-    });
+    cfg.RegisterServicesFromAssemblies(assembly);
+    cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
 });
+
+// Add Controllers
+builder.Services.AddControllers();
+
+// Add Swagger
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
@@ -78,16 +81,10 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
-app.UseHttpsRedirection();
+app.UseSwagger();
+app.UseSwaggerUI();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Order Service API v1");
-    });
-}
+app.UseHttpsRedirection();
 
 app.MapControllers();
 

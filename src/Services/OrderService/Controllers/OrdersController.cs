@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using FluentValidation;
 using OrderService.Commands;
 using OrderService.Dtos;
 using OrderService.Queries;
@@ -134,6 +135,12 @@ public class OrdersController : ControllerBase
             var order = await _mediator.Send(command);
             return CreatedAtAction(nameof(GetOrderById), new { orderId = order.OrderId }, ApiResponse<OrderResponseDto>.SuccessResponse(order, "Order created successfully"));
         }
+        catch (ValidationException ex)
+        {
+            _logger.LogWarning("Validation error creating order: {Errors}", string.Join(", ", ex.Errors.Select(e => e.ErrorMessage)));
+            var errorMessages = ex.Errors.Select(e => e.ErrorMessage).ToList();
+            return BadRequest(ApiResponse<object>.FailureResponse("Invalid order data", errorMessages));
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating order");
@@ -168,6 +175,12 @@ public class OrdersController : ControllerBase
 
             var order = await _mediator.Send(command);
             return Ok(ApiResponse<OrderResponseDto>.SuccessResponse(order, "Order updated successfully"));
+        }
+        catch (ValidationException ex)
+        {
+            _logger.LogWarning("Validation error updating order: {Errors}", string.Join(", ", ex.Errors.Select(e => e.ErrorMessage)));
+            var errorMessages = ex.Errors.Select(e => e.ErrorMessage).ToList();
+            return BadRequest(ApiResponse<object>.FailureResponse("Invalid order data", errorMessages));
         }
         catch (InvalidOperationException ex)
         {
@@ -267,6 +280,12 @@ public class OrdersController : ControllerBase
 
             var order = await _mediator.Send(command);
             return Ok(ApiResponse<OrderResponseDto>.SuccessResponse(order, "Items added successfully"));
+        }
+        catch (ValidationException ex)
+        {
+            _logger.LogWarning("Validation error adding items: {Errors}", string.Join(", ", ex.Errors.Select(e => e.ErrorMessage)));
+            var errorMessages = ex.Errors.Select(e => e.ErrorMessage).ToList();
+            return BadRequest(ApiResponse<object>.FailureResponse("Invalid item data", errorMessages));
         }
         catch (InvalidOperationException ex)
         {

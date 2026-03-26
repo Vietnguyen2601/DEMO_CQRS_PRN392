@@ -41,7 +41,7 @@ public class OrderReadRepository : IOrderReadRepository
     {
         var doc = await _collection.Find(x => x.OrderId == orderId)
             .FirstOrDefaultAsync(cancellationToken);
-        
+
         return doc == null ? null : MapToResponseDto(doc);
     }
 
@@ -58,7 +58,7 @@ public class OrderReadRepository : IOrderReadRepository
     {
         // Find order containing this item
         var doc = await _collection.Find(
-            Builders<OrderReadDocument>.Filter.ElemMatch(x => x.OrderItems, 
+            Builders<OrderReadDocument>.Filter.ElemMatch(x => x.OrderItems,
                 Builders<OrderItemReadDocument>.Filter.Eq(oi => oi.OrderItemId, orderItemId)))
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -81,9 +81,9 @@ public class OrderReadRepository : IOrderReadRepository
     public async Task UpsertAsync(Models.Order order, CancellationToken cancellationToken = default)
     {
         var doc = MapToReadDocument(order);
-        
+
         var filter = Builders<OrderReadDocument>.Filter.Eq(x => x.OrderId, order.OrderId);
-        
+
         await _collection.ReplaceOneAsync(
             filter,
             doc,
@@ -100,12 +100,12 @@ public class OrderReadRepository : IOrderReadRepository
     public async Task SyncFromWriteStoreAsync(IEnumerable<Models.Order> orders, CancellationToken cancellationToken = default)
     {
         var docs = orders.Select(MapToReadDocument).ToList();
-        
+
         if (docs.Count == 0) return;
 
         // Clear and re-insert for complete sync
         await _collection.DeleteManyAsync(Builders<OrderReadDocument>.Filter.Empty, cancellationToken);
-        
+
         if (docs.Count > 0)
         {
             await _collection.InsertManyAsync(docs, cancellationToken: cancellationToken);

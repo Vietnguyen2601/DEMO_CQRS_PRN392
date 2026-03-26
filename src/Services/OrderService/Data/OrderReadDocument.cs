@@ -15,7 +15,7 @@ public class OrderReadDocument
     public Guid AccountId { get; set; }
     public double TotalAmount { get; set; }
     public string DeliveryAddress { get; set; } = string.Empty;
-    
+
     [BsonElement("OrderItems")]
     public List<OrderItemReadDocument> OrderItems { get; set; } = new();
 

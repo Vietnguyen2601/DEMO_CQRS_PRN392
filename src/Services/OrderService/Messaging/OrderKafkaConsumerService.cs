@@ -36,7 +36,7 @@ public class OrderKafkaConsumerService : BackgroundService
         // Subscribe to product and inventory events
         consumer.Subscribe(new[] { _settings.ProductEventsTopic, _settings.InventoryEventsTopic });
 
-        _logger.LogInformation("OrderKafkaConsumerService started, listening to topics: {Topics}", 
+        _logger.LogInformation("OrderKafkaConsumerService started, listening to topics: {Topics}",
             string.Join(", ", _settings.ProductEventsTopic, _settings.InventoryEventsTopic));
 
         try
