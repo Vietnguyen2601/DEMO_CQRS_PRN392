@@ -1,5 +1,9 @@
+using OrderService.Configurations;
 using OrderService.Data;
+using OrderService.Messaging;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +11,21 @@ var builder = WebApplication.CreateBuilder(args);
 // Add DbContext
 builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Configure MongoDB for Read Store
+builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDb"));
+builder.Services.AddSingleton<IMongoClient>(sp =>
+{
+    var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
+    return new MongoClient(settings.ConnectionString);
+});
+builder.Services.AddScoped<IOrderReadRepository, OrderReadRepository>();
+builder.Services.AddHostedService<OrderProjectionSyncService>();
+
+// Configure Kafka Settings
+builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
+builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
+builder.Services.AddHostedService<OrderKafkaConsumerService>();
 
 // Add MediatR
 var assembly = Assembly.GetExecutingAssembly();
@@ -41,6 +60,15 @@ using (var scope = app.Services.CreateScope())
         // Seed sample data
         OrderSeeder.Seed(dbContext);
         logger.LogInformation("Database seeding completed successfully");
+
+        // Initial sync to MongoDB read store
+        var readRepository = scope.ServiceProvider.GetRequiredService<IOrderReadRepository>();
+        var orders = dbContext.Orders.Include(o => o.OrderItems).ToList();
+        if (orders.Count > 0)
+        {
+            await readRepository.SyncFromWriteStoreAsync(orders);
+            logger.LogInformation($"Initial sync completed: {orders.Count} orders synced to MongoDB");
+        }
     }
     catch (Exception ex)
     {
