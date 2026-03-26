@@ -39,7 +39,7 @@ Service   Service     Service    Service  Service
 ```
 CQRS/
 ├── CQRS.sln
-├── docker-compose.yml
+├── docker-compose.kafka.yml
 ├── README.md
 └── src/
     ├── ApiGateway/                    ← YARP Reverse Proxy
@@ -163,10 +163,19 @@ dotnet run --urls "http://localhost:5005"
 
 ---
 
-### Option 3: Docker Compose
+### Option 3: Start Kafka with Docker Compose
 
 ```bash
-docker-compose up --build
+docker compose -f docker-compose.kafka.yml up -d
+```
+
+Kafka broker sẽ chạy tại `localhost:9092` (khớp với cấu hình trong ProductService/InventoryService).
+
+Kafka UI: `http://localhost:8085`
+
+```bash
+# Stop Kafka stack
+docker compose -f docker-compose.kafka.yml down
 ```
 
 ---
@@ -317,6 +326,9 @@ Mỗi service có Swagger riêng (khi chạy development mode):
 - **CQRS tách biệt Command/Query**: Mọi thay đổi dữ liệu đi qua `Command`, mọi đọc dữ liệu đi qua `Query` — không được gọi lẫn lộn.
 - **Kafka Events**: ProductService publish vào topic `product-events`, InventoryService publish vào topic `inventory-events`.
 - **Kafka Consumers**: InventoryService subscribe `product-events`, ProductService subscribe `inventory-events`.
+- **Kafka Resilience**: Nếu topic chưa tồn tại tại thời điểm service khởi động, consumer sẽ tự retry/tự tạo topic và không làm dừng host.
+- **Auto Sync Flow**: `ProductCreated` -> InventoryService auto-create tồn kho mặc định (quantity = 0).
+- **Auto Sync Flow**: `ProductDeleted` -> InventoryService auto-delete tồn kho tương ứng.
 
 ---
 
