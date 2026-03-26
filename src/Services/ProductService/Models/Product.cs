@@ -15,5 +15,5 @@ public class Product
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation property
-    public Category Category { get; set; }
+    public Category Category { get; set; } = null!;
 }
